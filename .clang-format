@@ -1,0 +1,10 @@
+BasedOnStyle: Google
+IndentWidth: 4
+AccessModifierOffset: -2
+AlignAfterOpenBracket: AlwaysBreak
+
+IncludeCategories:
+  # C++ system headers
+  - Regex: <[a-z_]*>
+    Priority: 6
+    CaseSensitive: true

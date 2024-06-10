@@ -1,0 +1,27 @@
+image_width: 1920
+image_height: 1080
+camera_name: zed_left_camera
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [ 1073.58, 0.000000, 935.61,
+            0.000000, 1073.51, 539.225,
+            0.000000, 0.000000, 1.000000]
+distortion_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [-0.0620423, 0.0355664, -2.4591e-06, -0.000245264, -0.0129101]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1.000000, 0.000000, 0.000000,
+         0.000000, 1.000000, 0.000000,
+         0.000000, 0.000000, 1.000000]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [2646.5302734375, 0.0, 1479.546439852682,
+         0.0, 0.0, 2719.851318359375,
+         929.4667837511515, 0.0, 0.0,
+         0.0, 1.0, 0.0]
