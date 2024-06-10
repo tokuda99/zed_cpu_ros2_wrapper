@@ -221,7 +221,6 @@ bool ZedCpuRos2Wrapper::initCalibrationParms() {
     return true;
 }
 
-auto start_time = std::chrono::system_clock::now();
 void ZedCpuRos2Wrapper::cameraSpinner() {
     capture_thread_ = std::thread([this]() {
         uint64_t last_timestamp = 0;
@@ -307,12 +306,6 @@ void ZedCpuRos2Wrapper::cameraSpinner() {
             right_camera_transport_pub_.publish(
                 *right_image_msg, *right_camera_info_msg);
             publish_next_frame_ = publish_rate_ < 0;
-
-            // auto end_time = std::chrono::system_clock::now();
-            // std::chrono::duration<double> elapsed_seconds =
-            //     end_time - start_time;
-            // RCLCPP_INFO(get_logger(), "FPS: %f", 1.0 /
-            // elapsed_seconds.count()); start_time = end_time;
         }
     });
 }
