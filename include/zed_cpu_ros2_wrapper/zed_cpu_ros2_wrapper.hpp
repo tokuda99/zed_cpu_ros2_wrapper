@@ -143,15 +143,17 @@ class ZedCpuRos2Wrapper : public rclcpp::Node {
     ZedParams zed_params_;
     std::string left_camera_frame_id_, right_camera_frame_id_;
     CalibrationParams left_calib_params_, right_calib_params_;
-    // Publisher used for intra process comm
-    // (プロセス内通信用のパブリッシャー)
-    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_;
-    rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_pub_;
 
-    // Publisher used for inter process comm
-    // (プロセス間通信用のパブリッシャー)
-    image_transport::CameraPublisher left_camera_transport_pub_;
-    image_transport::CameraPublisher right_camera_transport_pub_;
+    rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr
+        left_camerainfo_pub_;
+    rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr
+        right_camerainfo_pub_;
+    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr left_image_pub_;
+    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr right_image_pub_;
+    rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr
+        left_compressed_image_pub_;
+    rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr
+        right_compressed_image_pub_;
 
     std::shared_ptr<camera_info_manager::CameraInfoManager>
         left_camera_info_manager_;
@@ -167,6 +169,7 @@ class ZedCpuRos2Wrapper : public rclcpp::Node {
     bool publish_next_frame_;
 
     bool use_camera_buffer_timestamps_;
+    bool compressed_image_transport_;
     bool initCalibrationParms();
     bool openCamera() noexcept;
     void cameraSpinner();

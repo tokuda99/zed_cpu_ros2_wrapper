@@ -73,25 +73,38 @@ ZedCpuRos2Wrapper::ZedCpuRos2Wrapper(
     }
     use_camera_buffer_timestamps_ =
         declare_parameter<bool>("use_camera_buffer_timestamps", false);
+    compressed_image_transport_ =
+        declare_parameter<bool>("compressed", true);
 
     auto left_image_topic_name = this->declare_parameter<std::string>(
         "left_image_topic_name", "zed/left_camera/image_raw");
     auto right_image_topic_name = this->declare_parameter<std::string>(
         "right_image_topic_name", "zed/right_camera/image_raw");
-    left_camera_frame_id_ =
-        this->declare_parameter<std::string>("left_camera_frame_id", "left_camera");
+    left_camera_frame_id_ = this->declare_parameter<std::string>(
+        "left_camera_frame_id", "left_camera");
     right_camera_frame_id_ = this->declare_parameter<std::string>(
         "right_camera_frame_id", "right_camera");
 
     auto use_sensor_data_qos =
         this->declare_parameter<bool>("use_sensor_data_qos", false);
     const auto qos =
-        use_sensor_data_qos ? rclcpp::SensorDataQoS() : rclcpp::QoS(5);
+        use_sensor_data_qos ? rclcpp::SensorDataQoS() : rclcpp::QoS(10);
 
-    left_camera_transport_pub_ = image_transport::create_camera_publisher(
-        this, left_image_topic_name, qos.get_rmw_qos_profile());
-    right_camera_transport_pub_ = image_transport::create_camera_publisher(
-        this, right_image_topic_name, qos.get_rmw_qos_profile());
+    left_camerainfo_pub_ = this->create_publisher<sensor_msgs::msg::CameraInfo>(
+        "zed/left_camera/camera_info", qos);
+    right_camerainfo_pub_ =
+        this->create_publisher<sensor_msgs::msg::CameraInfo>(
+            "zed/right_camera/camera_info", qos);
+    left_image_pub_ = this->create_publisher<sensor_msgs::msg::Image>(
+        "zed/left_camera/image_raw", qos);
+    right_image_pub_ = this->create_publisher<sensor_msgs::msg::Image>(
+        "zed/right_camera/image_raw", qos);
+    left_compressed_image_pub_ =
+        this->create_publisher<sensor_msgs::msg::CompressedImage>(
+            "zed/left_camera/image_raw/compressed", qos);
+    right_compressed_image_pub_ =
+        this->create_publisher<sensor_msgs::msg::CompressedImage>(
+            "zed/right_camera/image_raw/compressed", qos);
 
     left_camera_info_manager_ =
         std::make_shared<camera_info_manager::CameraInfoManager>(
@@ -112,8 +125,7 @@ ZedCpuRos2Wrapper::~ZedCpuRos2Wrapper() {
     }
 }
 
-    bool
-    ZedCpuRos2Wrapper::openCamera() noexcept {
+bool ZedCpuRos2Wrapper::openCamera() noexcept {
     sl_oc::video::VideoParams params;
     params.res = zed_params_.getResolution();
     params.fps = zed_params_.getFps();
@@ -286,11 +298,25 @@ void ZedCpuRos2Wrapper::cameraSpinner() {
                 continue;
             }
 
-            auto left_image_msg =
-                cv_bridge::CvImage(left_header, "bgr8", left_rect).toImageMsg();
-            auto right_image_msg =
-                cv_bridge::CvImage(right_header, "bgr8", right_rect)
-                    .toImageMsg();
+            if (compressed_image_transport_) {
+                auto left_image_msg =
+                    cv_bridge::CvImage(left_header, "bgr8", left_rect)
+                        .toCompressedImageMsg();
+                auto right_image_msg =
+                    cv_bridge::CvImage(right_header, "bgr8", right_rect)
+                        .toCompressedImageMsg();
+                left_compressed_image_pub_->publish(*left_image_msg);
+                right_compressed_image_pub_->publish(*right_image_msg);
+            } else {
+                auto left_image_msg =
+                    cv_bridge::CvImage(left_header, "bgr8", left_rect)
+                        .toImageMsg();
+                auto right_image_msg =
+                    cv_bridge::CvImage(right_header, "bgr8", right_rect)
+                        .toImageMsg();
+                left_image_pub_->publish(*left_image_msg);
+                right_image_pub_->publish(*right_image_msg);
+            }
 
             auto left_camera_info_msg =
                 std::make_unique<sensor_msgs::msg::CameraInfo>(
@@ -300,11 +326,9 @@ void ZedCpuRos2Wrapper::cameraSpinner() {
                 std::make_unique<sensor_msgs::msg::CameraInfo>(
                     right_camera_info_manager_->getCameraInfo());
             right_camera_info_msg->header = right_header;
+            left_camerainfo_pub_->publish(*left_camera_info_msg);
+            right_camerainfo_pub_->publish(*right_camera_info_msg);
 
-            left_camera_transport_pub_.publish(
-                *left_image_msg, *left_camera_info_msg);
-            right_camera_transport_pub_.publish(
-                *right_image_msg, *right_camera_info_msg);
             publish_next_frame_ = publish_rate_ < 0;
         }
     });

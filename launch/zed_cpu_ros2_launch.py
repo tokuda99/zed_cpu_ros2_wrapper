@@ -18,6 +18,7 @@ def generate_launch_description():
                 "use_camera_buffer_timestamps": LaunchConfiguration(
                     "use_camera_buffer_timestamps"
                 ),
+                "compressed" : LaunchConfiguration("compressed"),
                 "left_image_topic_name": LaunchConfiguration("left_image_topic_name"),
                 "right_image_topic_name": LaunchConfiguration("right_image_topic_name"),
                 "left_camera_frame_id": LaunchConfiguration("left_camera_frame_id"),
@@ -36,6 +37,7 @@ def generate_launch_description():
             add_launch_arg("fps", "15"),
             add_launch_arg("publish_rate", "10.0"),
             add_launch_arg("use_camera_buffer_timestamps", "false"),
+            add_launch_arg("compressed", "true"),
             add_launch_arg("left_image_topic_name", "zed/left_camera/image_raw"),
             add_launch_arg("right_image_topic_name", "zed/right_camera/image_raw"),
             add_launch_arg("left_camera_frame_id", "left_camera"),
