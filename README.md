@@ -33,11 +33,12 @@ ros2 launch zed_cpu_ros2_wrapper zed_cpu_ros2_launch.py resolution:=HD1080 fps:=
 |Parameter                     |Description                                                |Type    |Default                    |Option                          |
 |------------------------------|-----------------------------------------------------------|--------|---------------------------|--------------------------------|
 |`resolution`                  |Image resolution                                           |`string`|`HD1080`                   |`HD2K`, `HD1080`, `HD720`, `VGA`|
-|`fps`                         |Camera buffer update frame rate                            |`int`   |`15`                       |`100`, `60`, `30`, `15`         |
-|`publish_rate`                |Image msg publish frame rate                               |`double`|`10`                       |                                |
-|`use_camera_buffer_timestamps`|Change timestamp source from ROS TIME to camera buffer time|`bool`  |`False`                    |                                |
+|`fps`                         |Camera buffer update rate                                  |`int`   |`15`                       |`100`, `60`, `30`, `15`         |
+|`publish_rate`                |Image msg publish frame rate                               |`double`|`10.0`                     |                                |
+|`use_camera_buffer_timestamps`|Change timestamp source from ROS TIME to camera buffer time|`bool`  |`false`                    |                                |
+|`compressed`                  |Compressed Image                                           |`bool`  |`true`                     |                                |
 |`left_image_topic_name`       |Image topic name of left camera                            |`string`|`zed/left_camera/image_raw`|                                |
 |`right_image_topic_name`      |Image topic name of right camera                           |`string`|`zed/left_camera/image_raw`|                                |
 |`left_camera_frame_id`        |Frame id of left camera                                    |`string`|`left_camera`              |                                |
 |`right_camera_frame_id`       |Frame id of right camera                                   |`string`|`left_camera`              |                                |
-|`use_sensor_data_qos`         |Use sensor data qos                                        |`bool`  |`False`                    |                                |
+|`use_sensor_data_qos`         |Use sensor data qos                                        |`bool`  |`false`                    |                                |
