@@ -73,8 +73,8 @@ ZedCpuRos2Wrapper::ZedCpuRos2Wrapper(
     }
     use_camera_buffer_timestamps_ =
         declare_parameter<bool>("use_camera_buffer_timestamps", false);
-    compressed_image_transport_ =
-        declare_parameter<bool>("compressed", true);
+    intra_process_comm_ =
+        declare_parameter<bool>("intra_process_comm", false);
 
     auto left_image_topic_name = this->declare_parameter<std::string>(
         "left_image_topic_name", "zed/left_camera/image_raw");
@@ -90,6 +90,7 @@ ZedCpuRos2Wrapper::ZedCpuRos2Wrapper(
     const auto qos =
         use_sensor_data_qos ? rclcpp::SensorDataQoS() : rclcpp::QoS(10);
 
+    // Publisher used for intra process comm
     left_camerainfo_pub_ = this->create_publisher<sensor_msgs::msg::CameraInfo>(
         "zed/left_camera/camera_info", qos);
     right_camerainfo_pub_ =
@@ -105,6 +106,12 @@ ZedCpuRos2Wrapper::ZedCpuRos2Wrapper(
     right_compressed_image_pub_ =
         this->create_publisher<sensor_msgs::msg::CompressedImage>(
             "zed/right_camera/image_raw/compressed", qos);
+
+    // Publisher used for inter process comm
+    left_camera_transport_pub_ = image_transport::create_camera_publisher(
+        this, left_image_topic_name, qos.get_rmw_qos_profile());
+    right_camera_transport_pub_ = image_transport::create_camera_publisher(
+        this, right_image_topic_name, qos.get_rmw_qos_profile());
 
     left_camera_info_manager_ =
         std::make_shared<camera_info_manager::CameraInfoManager>(
@@ -298,26 +305,6 @@ void ZedCpuRos2Wrapper::cameraSpinner() {
                 continue;
             }
 
-            if (compressed_image_transport_) {
-                auto left_image_msg =
-                    cv_bridge::CvImage(left_header, "bgr8", left_rect)
-                        .toCompressedImageMsg();
-                auto right_image_msg =
-                    cv_bridge::CvImage(right_header, "bgr8", right_rect)
-                        .toCompressedImageMsg();
-                left_compressed_image_pub_->publish(*left_image_msg);
-                right_compressed_image_pub_->publish(*right_image_msg);
-            } else {
-                auto left_image_msg =
-                    cv_bridge::CvImage(left_header, "bgr8", left_rect)
-                        .toImageMsg();
-                auto right_image_msg =
-                    cv_bridge::CvImage(right_header, "bgr8", right_rect)
-                        .toImageMsg();
-                left_image_pub_->publish(*left_image_msg);
-                right_image_pub_->publish(*right_image_msg);
-            }
-
             auto left_camera_info_msg =
                 std::make_unique<sensor_msgs::msg::CameraInfo>(
                     left_camera_info_manager_->getCameraInfo());
@@ -326,9 +313,38 @@ void ZedCpuRos2Wrapper::cameraSpinner() {
                 std::make_unique<sensor_msgs::msg::CameraInfo>(
                     right_camera_info_manager_->getCameraInfo());
             right_camera_info_msg->header = right_header;
-            left_camerainfo_pub_->publish(*left_camera_info_msg);
-            right_camerainfo_pub_->publish(*right_camera_info_msg);
 
+            if (intra_process_comm_) {
+                // auto left_image_msg =
+                //     cv_bridge::CvImage(left_header, "bgr8", left_rect)
+                //         .toCompressedImageMsg();
+                // auto right_image_msg =
+                //     cv_bridge::CvImage(right_header, "bgr8", right_rect)
+                //         .toCompressedImageMsg();
+                // left_compressed_image_pub_->publish(*left_image_msg);
+                // right_compressed_image_pub_->publish(*right_image_msg);
+                auto left_image_msg =
+                    cv_bridge::CvImage(left_header, "bgr8", left_rect)
+                        .toImageMsg();
+                auto right_image_msg =
+                    cv_bridge::CvImage(right_header, "bgr8", right_rect)
+                        .toImageMsg();
+                left_image_pub_->publish(*left_image_msg);
+                right_image_pub_->publish(*right_image_msg);
+                left_camerainfo_pub_->publish(*left_camera_info_msg);
+                right_camerainfo_pub_->publish(*right_camera_info_msg);
+            } else {
+                auto left_image_msg =
+                    cv_bridge::CvImage(left_header, "bgr8", left_rect)
+                        .toImageMsg();
+                auto right_image_msg =
+                    cv_bridge::CvImage(right_header, "bgr8", right_rect)
+                        .toImageMsg();
+                left_camera_transport_pub_.publish(
+                    *left_image_msg, *left_camera_info_msg);
+                right_camera_transport_pub_.publish(
+                    *right_image_msg, *right_camera_info_msg);       
+            }
             publish_next_frame_ = publish_rate_ < 0;
         }
     });
