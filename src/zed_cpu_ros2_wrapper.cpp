@@ -73,8 +73,8 @@ ZedCpuRos2Wrapper::ZedCpuRos2Wrapper(
     }
     use_camera_buffer_timestamps_ =
         declare_parameter<bool>("use_camera_buffer_timestamps", false);
-    intra_process_comm_ =
-        declare_parameter<bool>("intra_process_comm", false);
+    intra_process_comm_ = declare_parameter<bool>("intra_process_comm", false);
+    compressed_ = declare_parameter<bool>("compressed", true);
 
     auto left_image_topic_name = this->declare_parameter<std::string>(
         "left_image_topic_name", "zed/left_camera/image_raw");
@@ -314,15 +314,18 @@ void ZedCpuRos2Wrapper::cameraSpinner() {
                     right_camera_info_manager_->getCameraInfo());
             right_camera_info_msg->header = right_header;
 
-            if (intra_process_comm_) {
-                // auto left_image_msg =
-                //     cv_bridge::CvImage(left_header, "bgr8", left_rect)
-                //         .toCompressedImageMsg();
-                // auto right_image_msg =
-                //     cv_bridge::CvImage(right_header, "bgr8", right_rect)
-                //         .toCompressedImageMsg();
-                // left_compressed_image_pub_->publish(*left_image_msg);
-                // right_compressed_image_pub_->publish(*right_image_msg);
+            if (compressed_) {
+                auto left_image_msg =
+                    cv_bridge::CvImage(left_header, "bgr8", left_rect)
+                        .toCompressedImageMsg();
+                auto right_image_msg =
+                    cv_bridge::CvImage(right_header, "bgr8", right_rect)
+                        .toCompressedImageMsg();
+                left_compressed_image_pub_->publish(*left_image_msg);
+                right_compressed_image_pub_->publish(*right_image_msg);
+                left_camerainfo_pub_->publish(*left_camera_info_msg);
+                right_camerainfo_pub_->publish(*right_camera_info_msg);
+            } else if (intra_process_comm_) {
                 auto left_image_msg =
                     cv_bridge::CvImage(left_header, "bgr8", left_rect)
                         .toImageMsg();
