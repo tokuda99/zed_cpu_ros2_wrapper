@@ -144,7 +144,7 @@ class ZedCpuRos2Wrapper : public rclcpp::Node {
     std::string left_camera_frame_id_, right_camera_frame_id_;
     CalibrationParams left_calib_params_, right_calib_params_;
 
-    // Publisher used for intra process comm
+    // Publisher used for intra process comm (プロセス内通信用のパブリッシャ)
     rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr
         left_camerainfo_pub_;
     rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr
@@ -156,7 +156,7 @@ class ZedCpuRos2Wrapper : public rclcpp::Node {
     rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr
         right_compressed_image_pub_;
 
-    //  Publisher used for inter process comm
+    //  Publisher used for inter process comm (プロセス間通信用のパブリッシャ)
     image_transport::CameraPublisher left_camera_transport_pub_;
     image_transport::CameraPublisher right_camera_transport_pub_;
 
