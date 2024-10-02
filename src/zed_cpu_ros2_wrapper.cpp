@@ -88,7 +88,7 @@ ZedCpuRos2Wrapper::ZedCpuRos2Wrapper(
     auto use_sensor_data_qos =
         this->declare_parameter<bool>("use_sensor_data_qos", false);
     const auto qos =
-        use_sensor_data_qos ? rclcpp::SensorDataQoS() : rclcpp::QoS(5);
+        use_sensor_data_qos ? rclcpp::SensorDataQoS() : rclcpp::QoS(10);
 
     // Publisher used for intra process comm
     left_camerainfo_pub_ = this->create_publisher<sensor_msgs::msg::CameraInfo>(
