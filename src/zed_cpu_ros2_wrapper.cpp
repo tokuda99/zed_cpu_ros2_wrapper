@@ -74,7 +74,7 @@ ZedCpuRos2Wrapper::ZedCpuRos2Wrapper(
     use_camera_buffer_timestamps_ =
         declare_parameter<bool>("use_camera_buffer_timestamps", false);
     intra_process_comm_ = declare_parameter<bool>("intra_process_comm", false);
-    compressed_ = declare_parameter<bool>("compressed", true);
+    compressed_ = declare_parameter<bool>("compressed", false);
     undistorted_ = declare_parameter<bool>("undistorted", true);
 
     auto left_image_topic_name = this->declare_parameter<std::string>(
