@@ -266,9 +266,12 @@ void ZedCpuRos2Wrapper::cameraSpinner() {
                 timestamp = this->get_clock()->now();
             }
 
+            // cv::Mat yuv_image(
+            //     video_frame.height, video_frame.width, CV_8UC2,
+            //     video_frame.data);
             cv::Mat yuv_image(
-                video_frame.height, video_frame.width, CV_8UC2,
-                video_frame.data);
+                video_frame.height, video_frame.width, CV_8UC2);
+            std::memcpy(yuv_image.data, video_frame.data, video_frame.width * video_frame.height * 2);
             cv::Mat bgr_image;
             cv::cvtColor(yuv_image, bgr_image, cv::COLOR_YUV2BGR_YUYV);
 
