@@ -75,6 +75,7 @@ ZedCpuRos2Wrapper::ZedCpuRos2Wrapper(
         declare_parameter<bool>("use_camera_buffer_timestamps", false);
     intra_process_comm_ = declare_parameter<bool>("intra_process_comm", false);
     compressed_ = declare_parameter<bool>("compressed", true);
+    undistorted_ = declare_parameter<bool>("undistorted", true);
 
     auto left_image_topic_name = this->declare_parameter<std::string>(
         "left_image_topic_name", "zed/left_camera/image_raw");
@@ -283,26 +284,27 @@ void ZedCpuRos2Wrapper::cameraSpinner() {
             cv::Mat right_raw = bgr_image(cv::Rect(
                 bgr_image.cols / 2, 0, bgr_image.cols / 2, bgr_image.rows));
 
-            cv::Mat left_rect, right_rect;
-            try {
-                cv::remap(
-                    left_raw, left_rect, left_calib_params_.map_x,
-                    left_calib_params_.map_y, cv::INTER_LINEAR);
-            } catch (cv::Exception &e) {
-                RCLCPP_WARN_STREAM_THROTTLE(
-                    get_logger(), *this->get_clock(), 5000,
-                    "[ZED ROS Wrapper] " << e.what());
-                continue;
-            }
-            try {
-                cv::remap(
-                    right_raw, right_rect, right_calib_params_.map_x,
-                    right_calib_params_.map_y, cv::INTER_LINEAR);
-            } catch (cv::Exception &e) {
-                RCLCPP_WARN_STREAM_THROTTLE(
-                    get_logger(), *this->get_clock(), 5000,
-                    "[ZED ROS Wrapper] " << e.what());
-                continue;
+            cv::Mat left_image_for_pub, right_image_for_pub;
+            if (undistorted_) {
+                cv::Mat left_rect, right_rect;
+                try {
+                    cv::remap(left_raw, left_rect,
+                              left_calib_params_.map_x, left_calib_params_.map_y,
+                              cv::INTER_LINEAR);
+                    cv::remap(right_raw, right_rect,
+                              right_calib_params_.map_x, right_calib_params_.map_y,
+                              cv::INTER_LINEAR);
+                } catch (cv::Exception &e) {
+                    RCLCPP_WARN_STREAM_THROTTLE(
+                        get_logger(), *this->get_clock(), 5000,
+                        "[ZED ROS Wrapper] " << e.what());
+                    continue;
+                }
+                left_image_for_pub = left_rect;
+                right_image_for_pub = right_rect;
+            } else {
+                left_image_for_pub = left_raw;
+                right_image_for_pub = right_raw;
             }
 
             auto left_camera_info_msg =
@@ -316,10 +318,10 @@ void ZedCpuRos2Wrapper::cameraSpinner() {
 
             if (compressed_) {
                 auto left_image_msg =
-                    cv_bridge::CvImage(left_header, "bgr8", left_rect)
+                    cv_bridge::CvImage(left_header, "bgr8", left_image_for_pub)
                         .toCompressedImageMsg();
                 auto right_image_msg =
-                    cv_bridge::CvImage(right_header, "bgr8", right_rect)
+                    cv_bridge::CvImage(right_header, "bgr8", right_image_for_pub)
                         .toCompressedImageMsg();
                 left_compressed_image_pub_->publish(*left_image_msg);
                 right_compressed_image_pub_->publish(*right_image_msg);
@@ -327,10 +329,10 @@ void ZedCpuRos2Wrapper::cameraSpinner() {
                 right_camerainfo_pub_->publish(*right_camera_info_msg);
             } else if (intra_process_comm_) {
                 auto left_image_msg =
-                    cv_bridge::CvImage(left_header, "bgr8", left_rect)
+                    cv_bridge::CvImage(left_header, "bgr8", left_image_for_pub)
                         .toImageMsg();
                 auto right_image_msg =
-                    cv_bridge::CvImage(right_header, "bgr8", right_rect)
+                    cv_bridge::CvImage(right_header, "bgr8", right_image_for_pub)
                         .toImageMsg();
                 left_image_pub_->publish(*left_image_msg);
                 right_image_pub_->publish(*right_image_msg);
@@ -338,10 +340,10 @@ void ZedCpuRos2Wrapper::cameraSpinner() {
                 right_camerainfo_pub_->publish(*right_camera_info_msg);
             } else {
                 auto left_image_msg =
-                    cv_bridge::CvImage(left_header, "bgr8", left_rect)
+                    cv_bridge::CvImage(left_header, "bgr8", left_image_for_pub)
                         .toImageMsg();
                 auto right_image_msg =
-                    cv_bridge::CvImage(right_header, "bgr8", right_rect)
+                    cv_bridge::CvImage(right_header, "bgr8", right_image_for_pub)
                         .toImageMsg();
                 left_camera_transport_pub_.publish(
                     *left_image_msg, *left_camera_info_msg);

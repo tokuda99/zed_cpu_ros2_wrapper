@@ -176,6 +176,7 @@ class ZedCpuRos2Wrapper : public rclcpp::Node {
     bool use_camera_buffer_timestamps_;
     bool intra_process_comm_;
     bool compressed_;
+    bool undistorted_;
     bool initCalibrationParms();
     bool openCamera() noexcept;
     void cameraSpinner();
